@@ -20,7 +20,7 @@ void Instance::createInsance(const std::vector<const char*>& extensions, const s
 
 	vk::DebugUtilsMessengerCreateInfoEXT debugInfo{};
 	debugInfo.setMessageSeverity(vk::DebugUtilsMessageSeverityFlagBitsEXT::eError |
-		vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo);
+		vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning /*| vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo*/);
 	debugInfo.setMessageType(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
 		vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
 	debugInfo.setPfnUserCallback([](

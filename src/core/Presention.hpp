@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Module.hpp"
+#include "Swapchain.hpp"
 
 class Window: public Module
 {
@@ -19,20 +20,26 @@ public:
 		: Window{ physicalDevice, queueFamilyIndex,
 		vk::raii::SurfaceKHR{instance.getInstance(), surfaceCreateInfo}} {}
 
-	static std::vector<const char*> getInstanceExtensions();
+	Window(Window&& other) noexcept;
+	Window& operator=(Window&& other) noexcept;
+
+	static std::vector<const char*>& getInstanceExtensions(std::vector<const char*>& extensions) noexcept;
+
+	vk::Extent2D getImageExtent() const noexcept
+	{
+		return swapchainCreateInfo.imageExtent;
+	}
+
+	void rebuildSwapchain();
 
 protected:
 	Window() = default;
 
+	vk::raii::PhysicalDevice physicalDevice{nullptr};
 	vk::raii::SurfaceKHR surface{ nullptr };
-	vk::SurfaceCapabilitiesKHR surfaceCapabilities;
-	vk::SurfaceFormatKHR surfaceFormat;
-	vk::PresentModeKHR surfacePresentMode;
-	vk::raii::SwapchainKHR swapchain{nullptr};
-	std::vector<vk::Image> swapchainImages;
-	std::vector<vk::raii::ImageView> swapchainImageViews;
+	vk::SwapchainCreateInfoKHR swapchainCreateInfo;
+	Swapchain swapchain{ nullptr };
 
-	void initialSurfaceData(const vk::raii::PhysicalDevice& physicalDevice);
-	void createSwapchain();
-	void createSwapchainImageViews();
+	void initialSwapchainCreateInfo();
+	void updateSwapchainCreateInfo();
 };

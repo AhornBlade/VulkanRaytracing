@@ -2,14 +2,22 @@
 
 #include <iostream>
 
-std::vector<const char*> Module::getInstanceExtensions()
+Module& Module::operator=(Module&& other) noexcept
 {
-	return {};
+	if (this == &other)
+		return *this;
+	std::swap(other.device, device);
+	std::swap(other.queues, queues);
+	return *this;
 }
 
-std::vector<const char*> Module::getInstanceLayers()
+std::vector<const char*>& Module::getInstanceExtensions(std::vector<const char*>& extensions) noexcept
 {
-	return {};
+	return extensions;
+}
+std::vector<const char*>& Module::getInstanceLayers(std::vector<const char*>& layers) noexcept
+{
+	return layers;
 }
 
 uint32_t Module::getQueueFamilyIndex(const vk::raii::PhysicalDevice& physicalDevice, uint32_t queueCount, vk::QueueFlags queueType) const noexcept
@@ -38,6 +46,9 @@ void Module::createDevice(
 	const vk::PhysicalDeviceFeatures& features, 
 	float priorities)
 {
+	vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.getProperties();
+	std::cout << "Info: Using Physical Device: " << physicalDeviceProperties.deviceName << "\n";
+
 	std::vector<float> queuePriorities(queueCount, priorities);
 	vk::DeviceQueueCreateInfo queueCreateInfo;
 	queueCreateInfo.setQueueFamilyIndex(queueFamilyIndex);
@@ -61,7 +72,7 @@ void Module::createDevice(
 
 	for (uint32_t index = 0; index < queueCount; index++)
 	{
-		queues.emplace_back(device.getQueue(queueFamilyIndex, queueCount));
+		queues.emplace_back(device.getQueue(queueFamilyIndex, index));
 	}
 
 	std::cout << "Info: Success to create " << queues.size() << " queues\n";

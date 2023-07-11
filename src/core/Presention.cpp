@@ -2,97 +2,99 @@
 
 #include <iostream>
 
-Window::Window(const vk::raii::PhysicalDevice& physicalDevice, uint32_t queueFamilyIndex, vk::raii::SurfaceKHR&& _surface) : Module()
+Window::Window(const vk::raii::PhysicalDevice& _physicalDevice, uint32_t queueFamilyIndex, vk::raii::SurfaceKHR&& _surface) : Module(), physicalDevice{ _physicalDevice }
 {
 	surface = std::move(_surface);
 
 	std::vector<const char*> enabledExtension{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 	createDevice(physicalDevice, queueFamilyIndex, 1, enabledExtension);
-	initialSurfaceData(physicalDevice);
-	createSwapchain();
-	createSwapchainImageViews();
+	initialSwapchainCreateInfo();
+	swapchain = Swapchain{ device, swapchainCreateInfo };
 }
 
-std::vector<const char*> Window::getInstanceExtensions()
+Window::Window(Window&& other) noexcept
+	: Module{ std::move(other) }, physicalDevice{ std::move(other.physicalDevice) },
+	surface{ std::move(other.surface) },
+	swapchainCreateInfo{ std::move(other.swapchainCreateInfo) }, 
+	swapchain{ std::move(other.swapchain) } {}
+
+Window& Window::operator=(Window&& other) noexcept
 {
-	return { VK_KHR_SURFACE_EXTENSION_NAME };
+	if (this == &other)
+		return *this;
+	Module::operator=(std::move(other));
+	std::swap(physicalDevice, other.physicalDevice);
+	std::swap(surface, other.surface);
+	std::swap(swapchainCreateInfo, other.swapchainCreateInfo);
+	std::swap(swapchain, other.swapchain);
+
+	return *this;
 }
 
-void Window::initialSurfaceData(const vk::raii::PhysicalDevice& physicalDevice)
+std::vector<const char*>& Window::getInstanceExtensions(std::vector<const char*>& extensions) noexcept
+{
+	Module::getInstanceExtensions(extensions);
+	extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+	return extensions;
+}
+
+void Window::rebuildSwapchain()
+{
+	updateSwapchainCreateInfo();
+	swapchain = Swapchain{ device, swapchainCreateInfo };
+}
+
+void Window::initialSwapchainCreateInfo()
 {
 	auto surfaceFormats = physicalDevice.getSurfaceFormatsKHR(*surface);
-	surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(*surface);
+	auto surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(*surface);
 	auto surfacePresentModes = physicalDevice.getSurfacePresentModesKHR(*surface);
-	surfaceFormat = surfaceFormats[0];
+
+	vk::SurfaceFormatKHR enabledFormat = surfaceFormats[0];
 	for (auto& surfaceFormat : surfaceFormats)
 	{
 		if (surfaceFormat.format == vk::Format::eB8G8R8A8Srgb && surfaceFormat.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear)
 		{
-			surfaceFormat = surfaceFormat;
+			enabledFormat = surfaceFormat;
 			break;
 		}
 	}
 
-	surfacePresentMode = surfacePresentModes[0];
+	vk::PresentModeKHR enabledPresentMode = surfacePresentModes[0];
 
 	for (auto& presentMode : surfacePresentModes)
 	{
 		if (presentMode == vk::PresentModeKHR::eMailbox)
 		{
-			surfacePresentMode = presentMode;
+			enabledPresentMode = presentMode;
 			break;
 		}
 	}
-}
 
-void Window::createSwapchain()
-{
-	vk::SwapchainCreateInfoKHR createInfo{};
-	createInfo.setSurface(*surface);
-	createInfo.setOldSwapchain(*swapchain);
+	swapchainCreateInfo.setSurface(*surface);
 
-	createInfo.setMinImageCount((surfaceCapabilities.minImageCount == surfaceCapabilities.maxImageCount) ?
+	swapchainCreateInfo.setMinImageCount((surfaceCapabilities.minImageCount == surfaceCapabilities.maxImageCount) ?
 		surfaceCapabilities.maxImageCount : (surfaceCapabilities.minImageCount + 1));
-	createInfo.setImageExtent(surfaceCapabilities.currentExtent);
-	createInfo.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
-	createInfo.setImageArrayLayers(1);
-	createInfo.setImageSharingMode(vk::SharingMode::eExclusive);
-	createInfo.setImageFormat(surfaceFormat.format);
-	createInfo.setImageColorSpace(surfaceFormat.colorSpace);
+	swapchainCreateInfo.setImageExtent(surfaceCapabilities.currentExtent);
+	swapchainCreateInfo.setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
+	swapchainCreateInfo.setImageArrayLayers(1);
+	swapchainCreateInfo.setImageSharingMode(vk::SharingMode::eExclusive);
+	swapchainCreateInfo.setImageFormat(enabledFormat.format);
+	swapchainCreateInfo.setImageColorSpace(enabledFormat.colorSpace);
 
-	createInfo.setPreTransform(surfaceCapabilities.currentTransform);
-	createInfo.setClipped(VK_TRUE);
-	createInfo.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
-	createInfo.setPresentMode(surfacePresentMode);
-
-	swapchain = vk::raii::SwapchainKHR{ device, createInfo };
-
-	std::cout << "Info: Success to create swapchain\n";
+	swapchainCreateInfo.setPreTransform(surfaceCapabilities.currentTransform);
+	swapchainCreateInfo.setClipped(VK_TRUE);
+	swapchainCreateInfo.setCompositeAlpha(vk::CompositeAlphaFlagBitsKHR::eOpaque);
+	swapchainCreateInfo.setPresentMode(enabledPresentMode);
 }
 
-void Window::createSwapchainImageViews()
+void Window::updateSwapchainCreateInfo()
 {
-	swapchainImages = swapchain.getImages();
-
-	vk::ImageViewCreateInfo imageViewCreateInfo{};
-	imageViewCreateInfo.setViewType(vk::ImageViewType::e2D);
-	imageViewCreateInfo.setFormat(surfaceFormat.format);
-	imageViewCreateInfo.components.r = vk::ComponentSwizzle::eIdentity;
-	imageViewCreateInfo.components.g = vk::ComponentSwizzle::eIdentity;
-	imageViewCreateInfo.components.b = vk::ComponentSwizzle::eIdentity;
-	imageViewCreateInfo.components.a = vk::ComponentSwizzle::eIdentity;
-	imageViewCreateInfo.subresourceRange.aspectMask = vk::ImageAspectFlagBits::eColor;
-	imageViewCreateInfo.subresourceRange.baseMipLevel = 0;
-	imageViewCreateInfo.subresourceRange.levelCount = 1;
-	imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-	imageViewCreateInfo.subresourceRange.layerCount = 1;
-
-	for (auto& swapchainImage : swapchainImages)
-	{
-		imageViewCreateInfo.setImage(swapchainImage);
-		swapchainImageViews.emplace_back(vk::raii::ImageView{device, imageViewCreateInfo});
-	}
-
-	std::cout << "Info: Success to create image views\n";
+	auto surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR(*surface);
+	swapchainCreateInfo.setMinImageCount((surfaceCapabilities.minImageCount == surfaceCapabilities.maxImageCount) ?
+		surfaceCapabilities.maxImageCount : (surfaceCapabilities.minImageCount + 1));
+	swapchainCreateInfo.setImageExtent(surfaceCapabilities.currentExtent);
+	swapchainCreateInfo.setPreTransform(surfaceCapabilities.currentTransform);
+	swapchainCreateInfo.setOldSwapchain(*swapchain);
 }
