@@ -6,9 +6,18 @@ class VulkanApplication
 public:
 	VulkanApplication()
 	{
-		
+		instance = Instance(getInstanceExtensions<GLFWWindow>(), getInstanceLayers<GLFWWindow>());
+		window = GLFWWindowManager::createGLFWWindow(instance, 
+			instance.getPhysicalDevices()[0], 0, 800, 600, "triangle");
 	}
 
+	void run()
+	{
+		while (!window.shouldClose())
+		{
+			GLFWWindowManager::show();
+		}
+	}
 
 private:
 	Instance instance;
@@ -18,4 +27,5 @@ private:
 int main()
 {
 	VulkanApplication app{};
+	app.run();
 }
