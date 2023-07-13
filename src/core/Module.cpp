@@ -20,21 +20,16 @@ std::vector<const char*>& Module::getInstanceLayers(std::vector<const char*>& la
 	return layers;
 }
 
-uint32_t Module::getQueueFamilyIndex(const vk::raii::PhysicalDevice& physicalDevice, uint32_t queueCount, vk::QueueFlags queueType) const noexcept
+Module::Module(
+	const vk::raii::PhysicalDevice& physicalDevice,
+	uint32_t queueFamilyIndex,
+	uint32_t queueCount,
+	const std::vector<const char*>& extensions = {},
+	const std::vector<const char*>& layers = {},
+	const vk::PhysicalDeviceFeatures& features = {},
+	float priorities = 0.5f)
 {
-	auto queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
-	for (uint32_t queueFamilyIndex = 0; queueFamilyIndex < queueFamilyProperties.size(); queueFamilyIndex++)
-	{
-		auto property = queueFamilyProperties[queueFamilyIndex];
-		if ((property.queueCount >= queueCount) &&
-			((property.queueFlags & queueType) == queueType))
-		{
-			return queueFamilyIndex;
-		}
-	}
-
-	std::cout << "Warning: Failed to find suitable queue family\n";
-	return queueFamilyProperties.size();
+	createDevice(physicalDevice, queueFamilyIndex, queueCount, extensions, layers, features, priorities);
 }
 
 void Module::createDevice(

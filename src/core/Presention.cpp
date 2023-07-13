@@ -2,13 +2,10 @@
 
 #include <iostream>
 
-Window::Window(const vk::raii::PhysicalDevice& _physicalDevice, uint32_t queueFamilyIndex, vk::raii::SurfaceKHR&& _surface) : Module(), physicalDevice{ _physicalDevice }
+Window::Window(const vk::raii::PhysicalDevice& _physicalDevice, uint32_t queueFamilyIndex, vk::raii::SurfaceKHR&& _surface) 
+	: Module(physicalDevice, queueFamilyIndex, 1, { VK_KHR_SWAPCHAIN_EXTENSION_NAME }), 
+	physicalDevice{ _physicalDevice }, surface{ std::move(surface) }
 {
-	surface = std::move(_surface);
-
-	std::vector<const char*> enabledExtension{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-	createDevice(physicalDevice, queueFamilyIndex, 1, enabledExtension);
 	initialSwapchainCreateInfo();
 	swapchain = Swapchain{ device, swapchainCreateInfo };
 }
