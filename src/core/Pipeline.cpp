@@ -12,14 +12,6 @@ Pipeline& Pipeline::operator=(Pipeline&& other) noexcept
 	return *this;
 }
 
-void Pipeline::createPipelineLayout(const std::vector<vk::DescriptorSetLayout>& setLayouts, const std::vector<vk::PushConstantRange>& pushConstantRanges)
-{
-	vk::PipelineLayoutCreateInfo createInfo{};
-	createInfo.setSetLayouts(setLayouts);
-	createInfo.setPushConstantRanges(pushConstantRanges);
-	pipelineLayout = vk::raii::PipelineLayout{ device, createInfo };
-}
-
 void Pipeline::createPipelineCache()
 {
 	vk::PipelineCacheCreateInfo createInfo{};

@@ -13,6 +13,11 @@ public:
 	static std::vector<const char*>& getInstanceExtensions(std::vector<const char*>& extensions) noexcept;
 	static std::vector<const char*>& getInstanceLayers(std::vector<const char*>& layers) noexcept;
 
+	const vk::raii::Device& getDevice() const noexcept
+	{
+		return device;
+	}
+
 protected:
 	Module() = default;
 	Module(

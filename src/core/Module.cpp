@@ -24,10 +24,10 @@ Module::Module(
 	const vk::raii::PhysicalDevice& physicalDevice,
 	uint32_t queueFamilyIndex,
 	uint32_t queueCount,
-	const std::vector<const char*>& extensions = {},
-	const std::vector<const char*>& layers = {},
-	const vk::PhysicalDeviceFeatures& features = {},
-	float priorities = 0.5f)
+	const std::vector<const char*>& extensions,
+	const std::vector<const char*>& layers,
+	const vk::PhysicalDeviceFeatures& features,
+	float priorities)
 {
 	createDevice(physicalDevice, queueFamilyIndex, queueCount, extensions, layers, features, priorities);
 }

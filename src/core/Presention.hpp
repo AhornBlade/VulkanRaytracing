@@ -30,6 +30,11 @@ public:
 		return swapchainCreateInfo.imageExtent;
 	}
 
+	vk::Format getImageFormat()const noexcept
+	{
+		return swapchainCreateInfo.imageFormat;
+	}
+
 	void rebuildSwapchain();
 
 protected:

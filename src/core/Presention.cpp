@@ -3,8 +3,8 @@
 #include <iostream>
 
 Window::Window(const vk::raii::PhysicalDevice& _physicalDevice, uint32_t queueFamilyIndex, vk::raii::SurfaceKHR&& _surface) 
-	: Module(physicalDevice, queueFamilyIndex, 1, { VK_KHR_SWAPCHAIN_EXTENSION_NAME }), 
-	physicalDevice{ _physicalDevice }, surface{ std::move(surface) }
+	: Module(_physicalDevice, queueFamilyIndex, 1, { VK_KHR_SWAPCHAIN_EXTENSION_NAME }), 
+	physicalDevice{ _physicalDevice }, surface{ std::move(_surface) }
 {
 	initialSwapchainCreateInfo();
 	swapchain = Swapchain{ device, swapchainCreateInfo };
