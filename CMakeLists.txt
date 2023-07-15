@@ -21,11 +21,16 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
 	add_definitions(-DVULKAN_RAY_TRACING_DEBUG)
 endif()
 
+set(VULKAN_RAYTRACING_SCRIPT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/script)
+
 #third_party
 add_subdirectory(third_party)
 
 #source
 add_subdirectory(src)
+
+#cmake script
+add_subdirectory(script)
 
 #examples
 add_subdirectory(examples)
